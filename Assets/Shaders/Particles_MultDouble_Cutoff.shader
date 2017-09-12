@@ -74,10 +74,17 @@ Category {
             fixed4 frag (v2f i) : SV_Target
             {
                 #ifdef SOFTPARTICLES_ON
+				
                 float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
                 float partZ = i.projPos.z;
                 float fade = saturate (_InvFade * (sceneZ-partZ));
                 i.color.a *= fade;
+
+				fixed4 bgCol = tex2Dproj(_BackgroundTexture, UNITY_PROJ_COORD(i.projPos));
+				i.color.r = (bgCol.r * (1.0f - _Cutoff)) + (i.color.r * _Cutoff);
+				i.color.g = (bgCol.g * (1.0f - _Cutoff)) + (i.color.g * _Cutoff);
+				i.color.b = (bgCol.b * (1.0f - _Cutoff)) + (i.color.b * _Cutoff);
+				i.color.a = (bgCol.a * (1.0f - _Cutoff)) + (i.color.a * _Cutoff);
                 #endif
 
                 fixed4 col;
@@ -86,13 +93,6 @@ Category {
                 col.a = i.color.a * tex.a;
                 col = lerp(fixed4(0.5f,0.5f,0.5f,0.5f), col, col.a);
                 UNITY_APPLY_FOG_COLOR(i.fogCoord, col, fixed4(0.5,0.5,0.5,0.5)); // fog towards gray due to our blend mode
-
-				#ifdef SOFTPARTICLES_ON
-				fixed4 bgCol = tex2Dproj(_BackgroundTexture, UNITY_PROJ_COORD(i.projPos));
-				col.r = (bgCol.r * (1.0f - _Cutoff)) + (col.r * _Cutoff);
-				col.g = (bgCol.g * (1.0f - _Cutoff)) + (col.g * _Cutoff);
-				col.b = (bgCol.b * (1.0f - _Cutoff)) + (col.b * _Cutoff);
-				#endif
 
                 return col;
 			}
